@@ -15,7 +15,6 @@ class DataConfig(BaseModel):
     data_path: str
     need_prepare: bool
     batch_size: int
-    max_len: int
     n_workers: int
     train_size: float
 
