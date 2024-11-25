@@ -6,7 +6,7 @@ save:
 	PYTHONPATH=. python src/save.py experiments/gpt_CE_MSE/epoch_epoch=19-val_MSE_loss=0.126.ckpt
 
 infer:
-	PYTHONPATH=. python src/infer.py
+	PYTHONPATH=. python src/infer.py config/config.yml
 
 .PHONY: lint
 lint:

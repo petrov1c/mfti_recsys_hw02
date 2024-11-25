@@ -9,7 +9,7 @@ from pytorch_lightning.callbacks import EarlyStopping, LearningRateMonitor, Mode
 from src.config import Config
 from src.constants import EXPERIMENTS_PATH
 from src.datamodule import RecDM
-from src.lightning_module import GPTModule
+from src.lightning_module import RecModule
 
 
 def arg_parse():
@@ -20,14 +20,14 @@ def arg_parse():
 
 def train(config: Config):
     datamodule = RecDM(config.data_config)
-    model = GPTModule(config)
+    model = RecModule(config)
 
-#    task = Task.init(
-#        project_name=config.project_name,
-#        task_name=f'{config.experiment_name}',
-#        auto_connect_frameworks=True,
-#    )
-#    task.connect(config.dict())
+    task = Task.init(
+        project_name=config.project_name,
+        task_name=f'{config.experiment_name}',
+        auto_connect_frameworks=True,
+    )
+    task.connect(config.dict())
 
     experiment_save_path = os.path.join(EXPERIMENTS_PATH, config.experiment_name)
     os.makedirs(experiment_save_path, exist_ok=True)
@@ -43,7 +43,7 @@ def train(config: Config):
         max_epochs=config.n_epochs,
         accelerator=config.accelerator,
         devices=[config.device],
-        log_every_n_steps=20,
+        log_every_n_steps=10,
         callbacks=[
             checkpoint_callback,
 #            EarlyStopping(monitor=config.monitor_metric, patience=4, mode=config.monitor_mode),
@@ -53,10 +53,10 @@ def train(config: Config):
 
     trainer.fit(model=model, datamodule=datamodule)
 
-#    output_model = OutputModel(task=task, name='latest')
+    output_model = OutputModel(task=task, name='latest')
 
     # Сохранение весов модели
-#    output_model.update_weights(weights_filename=checkpoint_callback.best_model_path, auto_delete_file=False)
+    output_model.update_weights(weights_filename=checkpoint_callback.best_model_path, auto_delete_file=False)
 
 
 if __name__ == '__main__':
