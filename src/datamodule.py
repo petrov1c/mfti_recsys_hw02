@@ -1,9 +1,10 @@
 import logging
 import os
-from typing import Optional
+from typing import Optional, List, Dict
 
 from sklearn.model_selection import train_test_split
 
+import torch
 import pandas as pd
 from pytorch_lightning import LightningDataModule
 from torch.utils.data import DataLoader, Dataset
@@ -42,6 +43,7 @@ class RecDM(LightningDataModule):
             shuffle=True,
             pin_memory=True,
             drop_last=False,
+            collate_fn=collate_fn,
         )
 
     def val_dataloader(self) -> DataLoader:
@@ -52,6 +54,7 @@ class RecDM(LightningDataModule):
             shuffle=False,
             pin_memory=True,
             drop_last=False,
+            collate_fn=collate_fn,
         )
 
     def test_dataloader(self) -> DataLoader:
@@ -62,7 +65,22 @@ class RecDM(LightningDataModule):
             shuffle=False,
             pin_memory=True,
             drop_last=False,
+            collate_fn=collate_fn,
         )
+
+
+def collate_fn(batch: List[Dict]) -> Dict:
+    users = [sample['user'] for sample in batch]
+    tracks = [sample['track'] for sample in batch]
+    first_track = [sample['first_track'] for sample in batch]
+    time = [sample['time'] for sample in batch]
+
+    return {
+        'user': torch.LongTensor(users),
+        'track': torch.LongTensor(tracks),
+        'first_track': torch.LongTensor(first_track),
+        'time': torch.Tensor(time),
+    }
 
 
 def split_and_save_datasets(data_path: str, train_fraction: float = 0.9):

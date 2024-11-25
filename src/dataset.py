@@ -16,12 +16,7 @@ class RecDataset(Dataset):
 
     def __getitem__(self, idx: int):
         rec = self.data.iloc[idx]
-        data = {
-            'user': int(rec.user),
-            'track': int(rec.track),
-            'first_track': int(rec.first_track),
-            'time': rec.time,
-        }
+        data = {key: val for key, val in rec.items()}
 
         if self.transforms:
             do = random.random() < PROB_TRANSFORM
