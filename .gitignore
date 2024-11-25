@@ -1,0 +1,9 @@
+experiments
+lightning_logs
+.ipynb_checkpoints
+.idea
+
+__pycache__
+/data/
+/submit/
+TODO.md

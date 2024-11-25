@@ -1,0 +1,51 @@
+project_name: 'hw-02'
+experiment_name: 'recommender'
+n_epochs: 100
+accelerator: 'gpu'
+device: 0
+monitor_metric: 'val_rmse'
+monitor_mode: 'min'
+
+model_kwargs:
+  d_model: 128     # размерность модели
+  n_tracks: 50000  # количество треков
+  n_users: 10000   # количество пользователей
+
+optimizer: 'torch.optim.AdamW'
+optimizer_kwargs:
+  lr: 3e-4
+  weight_decay: 1e-5
+
+#scheduler: 'torch.optim.lr_scheduler.ReduceLROnPlateau'
+#scheduler_kwargs:
+#  patience: 10
+#  verbose: True
+
+scheduler: 'torch.optim.lr_scheduler.CosineAnnealingLR'
+scheduler_kwargs:
+  T_max: 10
+  eta_min: 1e-5
+
+losses:
+#  - name: 'CrossEntropyLoss'
+#    weight: 0.1
+#    loss_fn: 'torch.nn.CrossEntropyLoss'
+#    loss_kwargs: {}
+
+  - name: 'MSE'
+    weight: 1.0
+    loss_fn: 'torch.nn.MSELoss'
+    loss_kwargs: {}
+
+#  - name: 'L1Loss'
+#    weight: 0.5
+#    loss_fn: 'torch.nn.L1Loss'
+#    loss_kwargs: {}
+
+data_config:
+  data_path: 'data'
+  need_prepare: False
+  batch_size: 128
+  max_len: 32
+  n_workers: 4
+  train_size: 0.9
