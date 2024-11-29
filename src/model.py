@@ -16,20 +16,17 @@ class Recommender(nn.Module):
     def __init__(self, cfg: Config):
         super().__init__()
         self.cfg = cfg
-        self.users = nn.Embedding(cfg.n_users, cfg.d_model)
 
         user_bias = torch.zeros((2, cfg.n_users))
         user_bias[1] += 1
         self.user_bias = nn.Parameter(user_bias)
-        # nn.init.normal_(self.user_bias, std=self.cfg.init_range)
-
         self.tracks = nn.Embedding(cfg.n_tracks, cfg.d_model)
 
-    def forward(self, users: torch.LongTensor, tracks: torch.LongTensor):
-        user_embs = self.users(users)
+    def forward(self, users: torch.LongTensor, tracks: torch.LongTensor, first_tracks: torch.LongTensor):
+        first_track_embs = self.tracks(first_tracks)
         track_embs = self.tracks(tracks)
 
-        x1 = torch.sum(user_embs * track_embs, dim=1)
+        x1 = torch.sum(first_track_embs * track_embs, dim=1)
 
         user_bias = self.user_bias[:, users]
         x2 = (x1 - user_bias[0]) * user_bias[1]

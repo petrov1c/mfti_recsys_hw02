@@ -4,6 +4,4 @@ lightning_logs
 .idea
 
 __pycache__
-/data/
-/submit/
 TODO.md
