@@ -37,7 +37,7 @@ def train(config: Config):
         monitor=config.monitor_metric,
         mode=config.monitor_mode,
         save_top_k=1,
-        filename=f'epoch_{{epoch:02d}}-{{{config.monitor_metric}:.4f}}',
+        filename=f'{{epoch:02d}}-{{{config.monitor_metric}:.4f}}',
     )
     trainer = pl.Trainer(
         max_epochs=config.n_epochs,
@@ -52,6 +52,7 @@ def train(config: Config):
     )
 
     trainer.fit(model=model, datamodule=datamodule)
+    trainer.test(ckpt_path=checkpoint_callback.best_model_path, datamodule=datamodule)
 
     output_model = OutputModel(task=task, name='latest')
 

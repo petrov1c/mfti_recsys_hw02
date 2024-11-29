@@ -48,15 +48,14 @@ class RecModule(pl.LightningModule):
         """
         Считаем лосс.
         """
-        # ToDo добавить лосс что пользователь и первый трек должны быть похожи
-        pr_time = self(users=batch['user'], tracks=batch['track'])
+        pr_time = self(users=batch['user'], tracks=batch['track'], first_tracks=batch['first_track'])
         return self._calculate_loss(pr_time, batch['time'],'train_')
 
     def validation_step(self, batch, batch_idx):
         """
         Считаем лосс и метрики.
         """
-        pr_time = self(users=batch['user'], tracks=batch['track'])
+        pr_time = self(users=batch['user'], tracks=batch['track'], first_tracks=batch['first_track'])
 
         self._calculate_loss(pr_time, batch['time'],'val_')
         self._valid_metrics(pr_time, batch['time'])
@@ -65,7 +64,7 @@ class RecModule(pl.LightningModule):
         """
         Считаем метрики.
         """
-        pr_time = self(users=batch['user'], tracks=batch['track'])
+        pr_time = self(users=batch['user'], tracks=batch['track'], first_tracks=batch['first_track'])
         self._test_metrics(pr_time, batch['time'])
 
     def on_validation_epoch_start(self) -> None:
@@ -85,13 +84,8 @@ class RecModule(pl.LightningModule):
     ) -> torch.Tensor:
         total_loss = 0
         for cur_loss in self._losses:
-            if cur_loss.name in ['CrossEntropyLoss']:
-                pass
-#                logits_shifted = pr_logits[:, :-1]
-#                labels = input_ids.detach().clone()[:, 1:]
-#                labels[labels == PAD_TOKEN] = -100
-
-#                loss = cur_loss.loss(logits_shifted.reshape(-1, logits_shifted.size(-1)), labels.reshape(-1))
+            if cur_loss.name in ['KL']:
+                loss = cur_loss.loss(pr_time[None, :], time[None, :])
             elif cur_loss.name in ['MSE', 'L1Loss']:
                 loss = cur_loss.loss(pr_time, time)
             total_loss += cur_loss.weight * loss

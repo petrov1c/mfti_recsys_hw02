@@ -2,6 +2,7 @@ import argparse
 import json
 import logging
 import os
+import glob
 from tqdm import tqdm
 
 import torch
@@ -18,8 +19,12 @@ def arg_parse():
     return parser.parse_args()
 
 
-def infer(config: Config):
-    model = RecModule.load_from_checkpoint('experiments/recommender/epoch_epoch=59-val_rmse=0.5607.ckpt', weights_only=True)
+def infer_track(config: Config):
+    list_of_files = glob.glob('experiments/recommender-track/*.ckpt')
+    latest_file = max(list_of_files, key=os.path.getctime)
+    print(latest_file)
+
+    model = RecModule.load_from_checkpoint(latest_file, weights_only=True)
     model = model.to('cuda')
     model.eval()
 
@@ -28,27 +33,27 @@ def infer(config: Config):
 
     recommendations = []
     with torch.no_grad():
-        for user_id in tqdm(range(config.model_kwargs['n_users'])):
+        for track_id in tqdm(range(track_count)):
             batch = {
-                'user': torch.LongTensor([user_id] * track_count).to('cuda'),
-                'track': torch.LongTensor(tracks_ids).to('cuda'),
+                'users': torch.LongTensor([0] * track_count).to('cuda'),
+                'tracks': torch.LongTensor(tracks_ids).to('cuda'),
+                'first_tracks': torch.LongTensor([track_id] * track_count).to('cuda'),
             }
 
-            time = model(users = batch['user'], tracks = batch['track'])
+            time = model(**batch)
 
-            # треки и пользователи начинаются с нуля
             sorted_time = torch.argsort(time, descending=True)[:MAX_LEN]
 
+            tracks = sorted_time.cpu().tolist()
+            tracks = [id for id in tracks if not id == track_id]
             recommendations.append(
                 {
-                    "user": user_id,
-                    "tracks": sorted_time.cpu().tolist(),
+                    "track": track_id,
+                    "tracks": tracks,
                 }
             )
-            # ToDo Отсортировать по убыванию времени и выкашиванию повторяющихся артистов
 
-
-    with open(os.path.join(config.data_config.data_path, "recommendations_hw02.json"), "w") as rf:
+    with open(os.path.join(config.data_config.data_path, "recommendations_hw02_track.json"), "w") as rf:
         for recommendation in tqdm(recommendations):
             rf.write(json.dumps(recommendation) + "\n")
 
@@ -58,4 +63,4 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
 
     config = Config.from_yaml(args.config_file)
-    infer(config)
+    infer_track(config)
